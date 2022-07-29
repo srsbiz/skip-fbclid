@@ -4,7 +4,8 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     const fbLinker = 'l.facebook.com/l.php?u='
     let url = info.linkUrl,
         linkerPos = url.lastIndexOf(fbLinker),
-        fbClidPos = -1
+        fbClidPos = -1,
+        tabOptions = { active: true }
     ;
     if (linkerPos > -1) {
         url = unescape(url.substring(linkerPos + fbLinker.length));
@@ -16,5 +17,18 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     ) {
         url = url.substring(0, fbClidPos);
     }
-    chrome.windows.create({url: url, incognito: true});
+    tabOptions.url = url;
+    chrome.windows.getAll({ populate: true, windowTypes: ["normal"] }, function(allWindows){
+        for (const window of allWindows){
+            if (window.incognito) {
+                tabOptions.windowId = window.id;
+                break;
+            }
+        }
+        if (tabOptions.windowId) {
+            chrome.tabs.create(tabOptions);
+        } else {
+            chrome.windows.create({ url: url, incognito: true })
+        }
+    });
 })
